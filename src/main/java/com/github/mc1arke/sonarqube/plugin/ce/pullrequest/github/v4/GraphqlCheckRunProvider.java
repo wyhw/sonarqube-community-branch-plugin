@@ -149,7 +149,7 @@ public class GraphqlCheckRunProvider implements CheckRunProvider {
 
 
         GraphQLRequestEntity graphQLRequestEntity =
-                graphqlProvider.createRequestBuilder().url(apiUrl + "/graphql").headers(headers)
+                graphqlProvider.createRequestBuilder().url(apiUrl + (apiUrl.endsWith("/") ? "graphql" : "/graphql")).headers(headers)
                         .request(CreateCheckRun.class)
                         .arguments(new Arguments("createCheckRun", new Argument<>("input", repositoryInputObject)))
                         .requestMethod(GraphQLTemplate.GraphQLMethod.MUTATE).build();

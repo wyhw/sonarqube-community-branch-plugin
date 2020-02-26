@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2019 Michael Clarke
+ * Copyright (C) 2020 Michael Clarke
  *
  * This program is free software; you can redistribute it and/or
  * modify it under the terms of the GNU Lesser General Public
@@ -29,7 +29,6 @@ import java.io.InputStream;
 import java.net.HttpURLConnection;
 import java.net.URLConnection;
 import java.nio.charset.StandardCharsets;
-import java.security.GeneralSecurityException;
 import java.time.Clock;
 import java.time.Instant;
 import java.time.ZoneId;
@@ -47,7 +46,21 @@ import static org.mockito.Mockito.verify;
 public class RestApplicationAuthenticationProviderTest {
 
     @Test
-    public void testTokenRetrievedHappyPath() throws IOException, GeneralSecurityException {
+    public void testTokenRetrievedHappyPath() throws IOException {
+        testTokenForUrl("apiUrl", "apiUrl/app/installations");
+    }
+
+    @Test
+    public void testTokenRetrievedHappyPathApiPath() throws IOException {
+        testTokenForUrl("apiUrl/api", "apiUrl/api/v3/app/installations");
+    }
+
+    @Test
+    public void testTokenRetrievedHappyPathApiPathTrailingSlash() throws IOException {
+        testTokenForUrl("apiUrl/api/", "apiUrl/api/v3/app/installations");
+    }
+
+    private void testTokenForUrl(String apiUrl, String fullUrl) throws IOException {
         UrlConnectionProvider urlProvider = mock(UrlConnectionProvider.class);
         Clock clock = Clock.fixed(Instant.ofEpochMilli(123456789L), ZoneId.of("UTC"));
 
@@ -73,8 +86,7 @@ public class RestApplicationAuthenticationProviderTest {
                  "\"}]}").getBytes(StandardCharsets.UTF_8))).when(repositoriesUrlConnection).getInputStream();
         doReturn(repositoriesUrlConnection).when(urlProvider).createUrlConnection("repositories_url");
 
-        String apiUrl = "apiUrl";
-        doReturn(installationsUrlConnection).when(urlProvider).createUrlConnection(eq(apiUrl + "/app/installations"));
+        doReturn(installationsUrlConnection).when(urlProvider).createUrlConnection(eq(fullUrl));
 
         String appId = "appID";
 
@@ -114,7 +126,7 @@ public class RestApplicationAuthenticationProviderTest {
     }
 
     @Test
-    public void testExceptionOnNoMatchingToken() throws IOException, GeneralSecurityException {
+    public void testExceptionOnNoMatchingToken() throws IOException {
         UrlConnectionProvider urlProvider = mock(UrlConnectionProvider.class);
         Clock clock = Clock.fixed(Instant.ofEpochMilli(123456789L), ZoneId.of("UTC"));
 
