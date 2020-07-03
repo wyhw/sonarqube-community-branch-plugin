@@ -179,7 +179,9 @@ public class GitlabServerPullRequestDecorator implements PullRequestBuildStatusD
                             .isPresent()) {
                         //only if the change is on a commit, that belongs to this MR
 
-                        List<NameValuePair> fileContentParams = Arrays.asList(
+                        List<NameValuePair> fileContentParams;
+                        if (mergeRequest.getDiffRefs() != null) {
+                            fileContentParams = Arrays.asList(
                                 new BasicNameValuePair("body", fileComment),
                                 new BasicNameValuePair("position[base_sha]", mergeRequest.getDiffRefs().getBaseSha()),
                                 new BasicNameValuePair("position[start_sha]", mergeRequest.getDiffRefs().getStartSha()),
@@ -188,6 +190,14 @@ public class GitlabServerPullRequestDecorator implements PullRequestBuildStatusD
                                 new BasicNameValuePair("position[new_path]", path),
                                 new BasicNameValuePair("position[new_line]", String.valueOf(issue.getIssue().getLine())),
                                 new BasicNameValuePair("position[position_type]", "text"));
+                        } else {
+                            fileContentParams = Arrays.asList(
+                                new BasicNameValuePair("body", fileComment),
+                                new BasicNameValuePair("position[old_path]", path),
+                                new BasicNameValuePair("position[new_path]", path),
+                                new BasicNameValuePair("position[new_line]", String.valueOf(issue.getIssue().getLine())),
+                                new BasicNameValuePair("position[position_type]", "text"));
+                        }
 
                         postCommitComment(mergeRequestDiscussionURL, headers, fileContentParams, fileCommentEnabled);
                     } else {
