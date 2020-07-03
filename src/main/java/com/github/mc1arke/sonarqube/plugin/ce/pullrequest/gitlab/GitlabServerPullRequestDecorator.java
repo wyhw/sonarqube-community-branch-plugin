@@ -109,7 +109,7 @@ public class GitlabServerPullRequestDecorator implements PullRequestBuildStatusD
             final String statusUrl = projectURL + String.format("/statuses/%s", revision);
             final String mergeRequestURl = projectURL + String.format("/merge_requests/%s", pullRequestId);
             final String prCommitsURL = mergeRequestURl + "/commits";
-            final String mergeRequestDiscussionURL = mergeRequestURl + "/discussions";
+            String mergeRequestDiscussionURL = mergeRequestURl + "/discussions";
 
             final String prHtmlUrl = String.format("%s/%s/merge_requests/%s", hostURL, repositorySlug, pullRequestId);
 
