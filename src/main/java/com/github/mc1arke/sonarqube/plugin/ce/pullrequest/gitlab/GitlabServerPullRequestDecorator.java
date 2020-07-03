@@ -131,23 +131,27 @@ public class GitlabServerPullRequestDecorator implements PullRequestBuildStatusD
 
             List<Discussion> discussions = getPagedList(mergeRequestDiscussionURL, headers, deleteCommentsEnabled, new TypeReference<List<Discussion>>() {
             });
+            if (discussions != null) {
+                LOGGER.info(String.format("Discussions in MR: %s ", discussions
+                        .stream()
+                        .map(Discussion::getId)
+                        .collect(Collectors.joining(", "))));
 
-            LOGGER.info(String.format("Discussions in MR: %s ", discussions
-                    .stream()
-                    .map(Discussion::getId)
-                    .collect(Collectors.joining(", "))));
-
-            for (Discussion discussion : discussions) {
-                for (Note note : discussion.getNotes()) {
-                    if (!note.isSystem() && note.getAuthor() != null && note.getAuthor().getUsername().equals(user.getUsername())) {
-                        //delete only our own comments
-                        deleteCommitDiscussionNote(mergeRequestDiscussionURL + String.format("/%s/notes/%s",
-                                discussion.getId(),
-                                note.getId()),
-                                headers, deleteCommentsEnabled);
+                for (Discussion discussion : discussions) {
+                    for (Note note : discussion.getNotes()) {
+                        if (!note.isSystem() && note.getAuthor() != null && note.getAuthor().getUsername().equals(user.getUsername())) {
+                            //delete only our own comments
+                            deleteCommitDiscussionNote(mergeRequestDiscussionURL + String.format("/%s/notes/%s",
+                                    discussion.getId(),
+                                    note.getId()),
+                                    headers, deleteCommentsEnabled);
+                        }
                     }
                 }
+            } else {
+                mergeRequestDiscussionURL = mergeRequestURl + "/notes";
             }
+
 
             List<PostAnalysisIssueVisitor.ComponentIssue> openIssues = analysis.getPostAnalysisIssueVisitor().getIssues().stream().filter(i -> OPEN_ISSUE_STATUSES.contains(i.getIssue().getStatus())).collect(Collectors.toList());
 
@@ -232,15 +236,16 @@ public class GitlabServerPullRequestDecorator implements PullRequestBuildStatusD
             httpGet.addHeader(entry.getKey(), entry.getValue());
         }
 
-        List<X> discussions = new ArrayList<>();
+        List<X> discussions = null;
 
         if (sendRequest) {
             HttpResponse httpResponse = HttpClients.createSystem().execute(httpGet);
             if (null != httpResponse && httpResponse.getStatusLine().getStatusCode() != 200) {
                 LOGGER.error(httpResponse.toString());
                 LOGGER.error(EntityUtils.toString(httpResponse.getEntity(), StandardCharsets.UTF_8));
-                throw new IllegalStateException("An error was returned in the response from the Gitlab API. See the previous log messages for details");
+                //throw new IllegalStateException("An error was returned in the response from the Gitlab API. See the previous log messages for details");
             } else if (null != httpResponse) {
+                discussions = new ArrayList<>();
                 LOGGER.debug(httpResponse.toString());
                 HttpEntity entity = httpResponse.getEntity();
                 List<X> pagedDiscussions = new ObjectMapper()
